@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE tiles-definitions PUBLIC "-//Apache Software Foundation//DTD Tiles Configuration 1.1//EN"
+        "http://jakarta.apache.org/struts/dtds/tiles-config_1_1.dtd">
+<!-- 定义系统的要显示的各种页面，这些页面可以在web-context.xml中被引用， 或者在Web层Controller里面作为ModelAndView的一个参数返回。 
+	例如 return new ModelAndView(getFormView(), model)。 -->
+
+<tiles-definitions>
+	
+	<!-- 登陆结果页面 -->
+	<definition name="indexView" 		page="/index.jsp"			/>
+	<definition name="jihuoView" 		page="/jihuo.jsp"			/>
+	
+</tiles-definitions>

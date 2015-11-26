@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:task="http://www.springframework.org/schema/task" 
+	xsi:schemaLocation="http://www.springframework.org/schema/beans  
+      http://www.springframework.org/schema/beans/spring-beans-3.0.xsd   
+     http://www.springframework.org/schema/context   
+     http://www.springframework.org/schema/context/spring-context-3.0.xsd
+     http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task-3.0.xsd
+      ">
+     
+	<description>定义业务层和集成层对象，包括Action、Service、BO、DAO、SAO、EJB、JNDI资源
+	</description>
+	<!--===================================================================== -->
+	<!-- 配置外部变量文件 -->
+	<!--===================================================================== -->
+	<bean id="propertyConfigurer" class="com.paic.pafa.utils.PafaPropertyPlaceholderConfigurer">
+		<property name="location">
+			<description>可以引用CLASSPATH中context-ring.properties中定义的变量
+			</description>
+			<value>classpath:context-ring.properties</value>
+		</property>
+		<property name="ignoreUnresolvablePlaceholders" value="true" />
+	</bean>
+
+
+
+    <context:annotation-config />
+    <!--修改为本项目的根包名，这点很重要 -->
+    <context:component-scan base-package="com.ring.front">
+        <!--正则表达式排除掉Web层所有类，这点也很重要。否则自动扫描到Web层类，并加入App PafaBeanContext中，会引出意想不到的问题。 -->
+          <context:exclude-filter type="regex" expression=".*\.web\..*" /> 
+    </context:component-scan>
+<!-- 
+	 <bean id="applicationControllerPojo" class="com.paic.pafa.biz.AppContext" />
+	
+	<bean id="userVerifier"
+		class="com.paic.pafa.app.lwc.service.remoting.access.servlet.LdapConncter">
+		<property name="groupDN">
+			<value>ou=virtual,ou=people,o=paic.com.cn</value>
+		</property>
+		<property name="prefix">
+			<value>uid</value>
+		</property>
+		<property name="providerUrl">
+			<value>ldap://oid-internal-int.paic.com.cn:15002</value>
+		</property>
+	</bean>
+ -->
+   <bean class="com.paic.pafa.biz.PafaAdvisorAutoProxyCreator"> 
+	</bean>
+	
+	<!--===================================================================== -->
+	<!-- 数据源定义 -->
+	<!--===================================================================== -->
+	<!-- TODO: 如果使用到数据源，请将dsFactory的定义打开，并正确配置数据源JNDI -->
+	<bean id="dsFactory"
+		class="com.paic.pafa.app.lwc.service.persistence.datasource.DataSourceFactoryBean">
+		<property name="defaultDSKey">
+			<description>缺省的数据源，必须指定为下面map中的entry key之一</description>
+			<value>00</value>
+		</property>
+		<property name="dataSources">
+			<description>可以在map属性里面添加多个数据源</description>
+			<map>
+				<entry key="00">
+					<ref local="defaultDS" />
+				</entry>
+			</map>
+		</property>
+	</bean>
+	<bean id="defaultDS" class="org.springframework.jndi.JndiObjectFactoryBean">
+		<property name="jndiName">
+			<value>java:comp/env/jdbc/ringAppDS</value>
+		</property>
+	</bean>
+
+
+	<!-- ===================================================================== -->
+	<!-- iBATIS 配置文件定义 -->
+	<!-- ===================================================================== -->
+	<bean id="sqlMapClient"
+		class="com.paic.pafa.app.lwc.service.persistence.dao.ibatis.SqlMapClientFactoryBean">
+		<property name="configLocation">
+			<description>
+				iBATIS SQL Mapping配置文件名，系统要能够在CLASSPATH中找到该文件
+			</description>
+			<value>/WEB-INF/classes/sqlmap-config.xml</value>
+		</property>
+	</bean>
+
+
+	<bean
+		class="org.springframework.transaction.interceptor.BeanFactoryTransactionAttributeSourceAdvisor">
+		<property name="adviceBeanName" value="transactionInterceptor">
+		</property>
+		<property name="transactionAttributeSource" ref="transactionAttributeSource">
+		</property>
+	</bean>
+	 
+
+	<bean id="txManager"
+		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<!--保证事务管理对象正确引用DataSource对象。如果系统中有两个及以上的数据源，因为只能配一个，请配置有增删改偏操作的那个。 -->
+		<property name="dataSource">
+			<ref bean="dsFactory" />
+		</property>
+		<!--使用容器数据源时，此值为2。如果不设为2，在高并发下有可能有问题。 -->
+		<property name="transactionSynchronization">
+			<value>2</value>
+		</property>
+	</bean>
+
+	<bean id="transactionInterceptor"
+		class="com.paic.pafa.biz.transaction.PafaTransactionInterceptor">
+		<!-- Spring3事务API之事务管理对象(txManager)，如果你项目中已声明此对象，则此对象定义不用增加。 -->
+		<property name="transactionManager" ref="txManager"></property>
+		<property name="transactionAttributeSource" ref="transactionAttributeSource"></property>
+		<!-- Bean管理事务和容器管理事务切换配置项，说见本节第5点 -->
+		<property name="txType">
+			<value>${app.tx.type}</value>
+		</property>
+		<property name="rollbackOnly">
+			<value>${app.tests.rollbackOnly}</value>
+		</property>
+	</bean>
+
+	<bean id="transactionAttributeSource"
+		class="com.paic.pafa.biz.transaction.PafaTransactionAttributeSource">
+	</bean>
+
+    <task:annotation-driven scheduler="qbScheduler" mode="proxy"/>  
+    <task:scheduler id="qbScheduler" pool-size="10"/> 
+
+	<!--===================================================================== -->
+	<!-- 功能模块组件定义 -->
+	<!--===================================================================== -->
+	<!-- TODO: 在这里为功能模块添加业务层组件的定义。 当功能模块比较多的时候，可以把biz-context.xml按照模块拆分成多个文件，例如 
+		biz-context-group1.xml，biz-context-group2.xml等，并在ejb-jar.xml中， 在EJB的ejb/BeanFactoryPath属性中将这些配置文件添加进去。 -->
+
+	<!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+	<!-- 定义模块的Action -->
+	<!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+	<!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+	<!-- 定义模块的Service -->
+	<!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+	<!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+	<!-- 定义模块的BO：一般不为singleton -->
+	<!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+	<!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+	<!-- 定义模块的DAO：一般不为singleton -->
+	<!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+	<!--import_quartz_xml -->
+
+</beans>

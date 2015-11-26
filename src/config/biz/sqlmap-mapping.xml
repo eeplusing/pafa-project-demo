@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN"
+        "http://www.ibatis.com/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="pafaapp">
+    <!-- TODO: 在这里定义各种sql语句，用法请参考iBATIS文档 -->
+     <insert
+		id="createClient"
+		parameterClass="com.paic.system.subsys.module.dto.ClientDTO"> 
+		INSERT INTO TUTORIAL_CLIENTS (CODE, NAME, BIRTHDAY,WEIGHT)
+		VALUES (#code#, #name#, #birthday#,#weight#) 
+	</insert>
+	<select id="selectClient" parameterClass="java.lang.String" resultClass="java.util.HashMap">
+	    SELECT * FROM TUTORIAL_CLIENTS WHERE code=#value#
+	</select>
+		<resultMap id="client-result" class="com.paic.system.subsys.module.dto.ClientDTO">
+		<result property="code" column="CODE" />
+		<result property="name" column="NAME" />
+		<result property="birthday" column="BIRTHDAY" />
+		<result property="weight" column="WEIGHT" /> 
+	</resultMap>
+	<select id="searchClientByCode" parameterClass="java.lang.String" resultMap="client-result">
+	    SELECT * FROM TUTORIAL_CLIENTS WHERE code=#value#
+	</select>
+	<resultMap id="client-info-result" class="com.paic.system.subsys.module.dto.ClientDTO">
+		<result property="code" column="CODE" />
+		<result property="name" column="NAME" />
+		<result property="birthday" column="BIRTHDAY" />
+		<result property="weight" column="WEIGHT" /> 
+	</resultMap>
+
+	<!-- 根据条件查询客户 -->
+	<select id="searchClientByCriteria" parameterClass="java.util.Map"
+		resultMap="client-info-result">
+		SELECT * FROM TUTORIAL_CLIENTS
+		<dynamic prepend="WHERE">
+			<isNotEmpty prepend="AND" property="name">
+				NAME LIKE #name#
+			</isNotEmpty>
+			<isNotEmpty prepend="AND" property="mobilephone">
+				MOBILEPHONE LIKE
+				#mobilephone#
+			</isNotEmpty>
+		</dynamic>
+	</select>
+    	<!-- 修改客户 -->
+	<insert id="updateClient" parameterClass="com.paic.system.subsys.module.dto.ClientDTO">
+		UPDATE TUTORIAL_CLIENTS
+		SET NAME=#name#, BIRTHDAY=#birthday#,
+		WEIGHT=#weight#
+		WHERE CODE=#code#
+	</insert>
+	
+	<parameterMap id="searchClient-map"  class="java.util.HashMap">
+       <parameter property="code" jdbcType="VARCHAR" javaType="java.lang.String" mode="IN"/>
+       <parameter property="result"  jdbcType="ORACLECURSOR"  javaType="java.sql.ResultSet" mode="OUT"/>
+    </parameterMap>
+
+    <resultMap id="searchClient-resultMap" class="com.paic.system.subsys.module.dto.ClientDTO">                                                                                                           
+       <result property="code"  column="CODE"/> 
+       <result property="name"   column="NAME"/>
+       <result property="birthday" jdbcType="Date" javaType="java.sql.Date" column="BIRTHDAY"/>
+       <result property="weight"  column="WEIGHT"/>
+    </resultMap>  
+	 <procedure id="selectClientProc"  parameterMap="searchClient-map"  resultMap="searchClient-resultMap">
+       {CALL queryClient(?,?)}
+    </procedure>
+</sqlMap>

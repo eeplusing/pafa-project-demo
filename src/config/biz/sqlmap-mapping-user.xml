@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://www.ibatis.com/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="light">
+<typeAlias alias="UserBasicInfoDto" type="com.ring.front.dto.userManager.UserBasicInfosDTO"></typeAlias>
+	<!-- 会员注册 -->
+    <insert id="ring-regist" parameterClass="com.ring.front.dto.RegisterInfosDTO"> 
+       INSERT INTO r_user_info_tab (
+		       	id,
+		       	mobile,
+		       	password,
+		       	nickName,
+		       	datecreate,
+		       	dateupdate
+       ) VALUES(
+				#userId#,
+				#mobile#,
+				#password#,
+				#nickName#,
+				now(),
+				now()
+	  )
+	</insert>
+	
+	<!-- 登陆 -->
+	<select id="ring-login" parameterClass="com.ring.front.dto.LoginInfoDTO" resultClass="java.lang.Integer">
+	    SELECT count(id) FROM r_user_info_tab WHERE mobile=#mobile# AND password=#password#
+	</select>
+	
+	<!-- 非首次登陆 -->
+	<select id="ring-login-non-first" parameterClass="com.ring.front.dto.LoginInfoDTO" resultClass="java.lang.Integer">
+	    SELECT count(id) FROM r_user_info_tab WHERE mobile=#mobile# AND token=#token# AND deviceId=#deviceID#
+	</select>
+	
+	<!-- 根据mobile查询用户信息 -->
+	<select id="qry-user-info-by-mobile" parameterClass="java.lang.String" resultClass="com.ring.front.dto.UserInfoDTO">
+	    SELECT id,mobile,password,nickName,sex,age,high,weight,stepLong,headImage,token,deviceId,ex_deviceId FROM r_user_info_tab WHERE mobile=#mobile#
+	</select>
+	
+	<!-- 根据userId查询用户信息 -->
+	<select id="qry-user-info-by-id" parameterClass="java.lang.String" resultClass="com.ring.front.dto.UserInfoDTO">
+	    SELECT id,mobile,password,nickName,sex,age,high,weight,stepLong,headImage,token,deviceId,ex_deviceId FROM r_user_info_tab WHERE id=#id#
+	</select>
+	
+	<!-- 编辑用户信息 -->
+	<update id="edit-user-info" parameterClass="com.ring.front.dto.UserInfoDTO">
+	    update r_user_info_tab
+	    <dynamic prepend="set">  
+	      <isNotNull prepend="," property="sex">sex = #sex: VARCHAR#</isNotNull>  
+	      <isNotNull prepend="," property="password">password = #password: VARCHAR#</isNotNull>   
+	      <isNotNull prepend="," property="high">high = #high: VARCHAR#</isNotNull>   
+	      <isNotNull prepend="," property="weight">weight = #weight: VARCHAR#</isNotNull>   
+	      <isNotNull prepend="," property="age">age = #age: VARCHAR#</isNotNull>  
+	      <isNotNull prepend="," property="stepLong">stepLong = #stepLong: VARCHAR#</isNotNull>  
+	    </dynamic>
+	    ,dateUpdate=now()
+	    where id = #id#
+	</update>
+	
+</sqlMap>

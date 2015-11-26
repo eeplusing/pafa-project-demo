@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://www.ibatis.com/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="ring">
+	<!-- 验证短信验证码 -->
+    <update id="validate-message-code" parameterClass="java.util.HashMap"> 
+       UPDATE r_smn_info_tab SET state=#state#,dateUpdate=now() WHERE mobile=#mobile# AND msgCode=#msgCode#
+	</update>
+	
+	<!-- 保存短信验证码 -->
+    <insert id="save-message-code" parameterClass="java.util.HashMap"> 
+       INSERT INTO r_smn_info_tab (
+		       	id,
+		       	mobile,
+		       	msgCode,
+		       	state,
+		       	datecreate,
+		       	dateupdate
+       ) VALUES(
+				#id#,
+				#mobile#,
+				#msgCode#,
+				#state#,
+				now(),
+				now()
+	  )
+	</insert>
+	
+</sqlMap>

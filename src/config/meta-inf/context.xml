@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<Context>
+ <Resource
+             name="mysqljdbc/pafatest/DefaultDS"
+             type="javax.sql.DataSource"
+             auth= "Container"
+             password="0a3a31883036a82cb07f9b22132854a9"
+             factory="org.apache.tomcat.dbcp.dbcp.SecBasicDataSourceFactory"
+             driverClassName="com.mysql.jdbc.Driver" 
+             maxIdle="2"
+             maxWait="50"
+             username="testuser"
+             url="jdbc:mysql://iqsz-dvm034:3306/testdb"
+             maxActive="4"/>
+</Context>

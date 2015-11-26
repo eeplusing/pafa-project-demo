@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="handelRing" default="war" basedir=".">
+	<property file="build.properties" />
+	<property file="version.properties" />
+	<property name="web.root" value="${tomcat.path}/webapps"></property>
+	<property name="project.name" value="${project.name.ENG}"/>
+	<property name="jdk.dir" value="${java.path}"/>
+	
+	<property name="dist" value="dist" />
+	<property name="classes" value="${dist}/classes" />
+	<property name="src.dir" value="src/java"/>
+	<property name="core.dir" value="src/config/core"/>
+	<property name="biz.dir" value="src/config/biz"/>
+	<property name="build" value="build"/>
+	<property name="build.open" value="build/pkg"/>
+	<property name="build.classes.dir" value="${build}/classes"/>
+	<property name="lib.dir" value="WebContent/WEB-INF/lib"/>
+
+	<path id="lib_classpath">
+		<fileset dir="WebContent/WEB-INF/lib/">
+			<include name="*.jar" />
+		</fileset>
+	</path>
+
+	<target name="clean" description="delete dist directory">
+		<delete dir="${dist}" />
+	</target>
+
+	<target name="compile" depends="clean" description="create ${classes} path, compile source and put binary file in ${classes} path">
+		<mkdir dir="${classes}" />
+		<javac destdir="${classes}" target="1.6" debug="true" deprecation="false" optimize="false" failonerror="true" encoding="UTF-8">
+			<compilerarg value="-Xlint:unchecked" />
+			<src path="${src.dir}" />
+			<classpath refid="lib_classpath" />
+		</javac>
+	</target>
+
+	<target name="prepare" description="put configuration in the ${classes} path">
+		<copy todir="${classes}">
+			<fileset dir="${core.dir}">
+				<include name="**/*.xml" />
+				<include name="**/*.properties" />
+				<include name="key.store" />
+				<include name="**/*.key" />
+			</fileset>
+		</copy>
+		<copy todir="${classes}">
+			<fileset dir="${biz.dir}">
+				<include name="**/*.xml" />
+			</fileset>
+		</copy>
+	</target>
+
+	<target name="war" depends="compile,prepare" description="generate war">
+		<war destfile="${build}/${project.name}.war" webxml="WebContent/WEB-INF/web.xml">
+			<fileset dir="WebContent">
+				<exclude name="WEB-INF/lib/*.jar" />
+				<exclude name="WEB-INF/web.xml" />
+			</fileset>
+			<lib dir="${lib.dir}">
+				<exclude name="easymock.jar"/>
+				<exclude name="jmock.jar"/>
+				<exclude name="junit*.jar"/>
+				<exclude name="pafa-test.jar"/>
+				<exclude name="servlet-api.jar"/>
+			</lib>
+			<classes dir="${classes}"/>
+		</war>
+	</target>
+	
+	<!--构建展开式的war包 -->
+	<target name="exploded-war" depends="compile,prepare" description="打展开式的war包"> 
+		<echo level="info">开始构建展开式的war包</echo>
+		<mkdir dir="${build.open}/ROOT/WEB-INF/lib"/>
+	    <mkdir dir="${build.open}/ROOT/WEB-INF/classes"/>
+		<!-- 创建WAR的内容 -->
+        <copy todir="${build.open}/ROOT/WEB-INF/classes">
+            <fileset dir="${classes}">
+            </fileset>
+        </copy>
+		<copy todir="${build.open}/ROOT/WEB-INF/lib"
+    		preservelastmodified="false" flatten="true" verbose="false">
+    		<fileset dir="${lib.dir}">
+    			<include name="**/*.jar" />
+    		</fileset>
+    	</copy>
+        <copy todir="${build.open}/ROOT">
+            <fileset dir="WebContent/"/>
+        </copy>
+		<delete dir="${dist}"/>
+	</target>
+	
+	<target name="deploy" depends="war" description="deploy project in tomcat">
+        <echo message="----------开始发布......----------"/>
+		<delete file="${web.root}/${project.name}.war"/>
+		<delete file="${web.root}/ROOT"/>
+		<!--<delete dir="${web.root}/ring_web"/>-->
+		<copy todir="${web.root}">
+            <fileset dir="${dist}">
+                <include name="${project.name}.war"/>
+            </fileset>
+        </copy>
+		<echo message="----------发布完成......----------"/>
+    </target>
+	
+	<target name="deploy-open" depends="exploded-war" description="deploy project in tomcat">
+        <echo message="----------开始发布......----------"/>
+		<delete file="${web.root}/${project.name}.war"/>
+		<!--<delete >
+			<fileset dir="D:/program Files (x86)/apache-tomcat-6.0.32/webapps/ROOT"/>
+		</delete>
+		<delete dir="${web.root}/ring_web"/>-->
+		<copy todir="${web.root}">
+            <fileset dir="${build.open}">
+            </fileset>
+        </copy>
+		<delete file="${web.root}/classes"/>
+		
+		<echo message="----------发布开放式包完成......----------"/>
+    </target>
+	
+	<target name="getVersion">  
+        <propertyfile file="version.properties" comment="This is Version File">  
+            <entry key="buildDate" type="date" value="now" pattern="yyyy-MM-dd HH:mm:ss" />  
+        </propertyfile>  
+        <property file="version.properties" />  
+        <copy todir="${build}">  
+            <fileset dir=".">  
+                <include name="version.properties" />  
+            </fileset>  
+        </copy>  
+    </target>
+	
+	<target name="dist" description="Generate the distribution">  
+		<antcall target="getVersion" />
+        <antcall target="deploy" />  
+    </target>
+	
+</project>

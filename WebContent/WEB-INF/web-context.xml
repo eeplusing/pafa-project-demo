@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="utf-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans  
+      http://www.springframework.org/schema/beans/spring-beans-3.0.xsd   
+    http://www.springframework.org/schema/context   
+     http://www.springframework.org/schema/context/spring-context-3.0.xsd ">
+
+	<description>定义web层的资源，包括视图解析、URL和Controller的关系、消息配置等</description>
+
+	<!--===================================================================== -->
+	<!-- 配置外部变量文件 -->
+	<!--===================================================================== -->
+	<bean id="propertyConfigurer"
+		class="com.paic.pafa.utils.PafaPropertyPlaceholderConfigurer">
+		<property name="location">
+			<description>可以引用CLASSPATH中context-ring.properties中定义的变量
+			</description>
+			<value>classpath:context-ring.properties</value>
+		</property>
+	</bean>
+    <context:component-scan base-package="com.ring.front.web" />
+	<bean id="webCommonUtils" class="com.paic.pafa.web.util.WebCommonUtils">
+		<!-- 默认的请求的编码 -->
+		<property name="defaultCharset">
+			<value>utf-8</value>
+		</property>
+		<property name="cookieCrossDomainSupport" value="true"></property>
+		<property name="enableSetterCommonAttrs" value="true"></property>
+		<property name="preventCaching" value="true"></property>
+	</bean>
+
+	<!-- Web拦截器 如请求编码、清理缓存的响应头、 (P3P)响应头、请求日志等 -->
+	<bean id="webCommonInterceptor" class="com.paic.pafa.web.util.WebCommonInterceptor">
+		<property name="webCommonUtils" ref="webCommonUtils"></property>
+	</bean>
+	<!-- Web拦截器 支持JSONP，以支持系统间在浏览器端跨域调用 -->
+	<bean id="jsonpSupportInterceptor" class="com.paic.pafa.web.util.JsonpSupportInterceptor">
+		<property name="callbackParameterName" value="pafaJsonpCallbak"></property>
+	</bean>
+
+	<!-- 主要支持的是两个Annotation:@DateTimeFormat 和@NumberFormat -->
+	<bean id="conversionService"
+		class="org.springframework.format.support.FormattingConversionServiceFactoryBean" />
+
+	<!-- HandlerAdapter，兼容Pafa3，如果已经定义，替换掉原有定义。 -->
+	<bean id="pafa3HandlerAdapter"
+		class="org.springframework.web.servlet.mvc.SimpleControllerHandlerAdapter"></bean>
+
+
+	<bean id="pafa3HandlerMapping"
+		class="org.springframework.web.servlet.handler.BeanNameUrlHandlerMapping">
+		<property name="interceptors">
+			<list>
+				<ref bean="webCommonInterceptor" />
+				<ref bean="jsonpSupportInterceptor" />
+			</list>
+		</property>
+	</bean>
+
+	<bean id="pafa4HandlerAdapter" class="com.paic.pafa.web.PafaAnnotationMethodHandlerAdapter">
+		<property name="conversionService">
+			<ref bean="conversionService" />
+		</property>
+		<property name="enablePafaValidator">
+			<value>false</value><!-- PAFA框架验证返回页面Object开关，ture则验证，false不验证 -->
+		</property>
+		<property name="customArgumentResolvers">
+			<list>
+				<bean class="com.paic.pafa.web.session.SessionAttrArgumentResolver">
+				</bean>
+				<bean class="com.paic.pafa.web.session.UidArgumentResolver">
+				</bean>
+			</list>
+		</property>
+<!-- 		<property name="defaultDateEditor"> -->
+<!-- 			用于数据绑定时，yyyy-MM-dd/yyy-MM-dd HH:mm:ss格式的字符串可转换为java.util.Date -->
+<!-- 			<bean class="com.paic.pafa.web.util.PafaDefaultDateEditor"></bean> -->
+<!-- 		</property> -->
+
+		<!-- 支持把Controller返回值序列化为JSON格式 -->
+		<property name="customModelAndViewResolvers">
+			<list>
+				<bean class="com.paic.pafa.web.view.JsonModelAndViewResolver">
+				</bean>
+			</list>
+		</property>
+	</bean>
+	
+    
+ 
+	<!-- 拦截器 -->
+	<bean id="pafa4HandlerMapping" class="com.paic.pafa.web.PafaAnnotationHandlerMapping">
+		<!-- Web拦截器列表，必须注意与pafa3HandlerMapping的拦截器列表相同 -->
+		<property name="interceptors">
+			<list>
+				<ref bean="webCommonInterceptor" />
+				<ref bean="jsonpSupportInterceptor" />
+			</list>
+		</property>
+	</bean>
+
+	<!-- 支持解析POST JSON格式的参数 -->
+	<bean id="supportPostJsonHttpRequest" class="com.paic.pafa.web.util.SupportPostJsonHttpRequest">
+		<!--即 Post请求时，增加请求头Content-Type=application/json，此类即认为此请求提交数据为JSON格式，便进行解析，有点类似于文件上传的请求。 -->
+		<property name="supportedMediaType">
+			<value>application/json</value>
+		</property>
+	</bean>
+
+
+
+	<bean id="PafaNegotiatingViewResolver" class="com.paic.pafa.web.view.PafaNegotiatingViewResolver">
+		<!--属性[order]必须是负数，保证此Bean的优先级最高（数值越小，优先级最高，默认为Integer.MAX_VALUE） -->
+		<property name="order" value="-100"></property>
+
+		<!--属性[retViewTypeParameterName]配置的是决定ViewResolver的参数名。也就是说，在一个链接上加参数：pafaRetViewType=js，则会选择jsonViewResolver这个ViewResolver来响应结果。 -->
+		<property name="retViewTypeParameterName" value="pafaRetViewType"></property>
+
+		<property name="viewResolvers">
+			<map>
+				<!-- ViewResolver[default]即pafa3中默认的TilesViewReolver，无参或无对应ViewResolver时则会自动选择此ViewResolver. -->
+				<entry key="default">
+					<ref bean="viewResolver" />
+				</entry>
+				<!--扩展的ViewResolver,对应json格式View，即可以响应JSON数据。即当请求增加参数：pafaRetViewType=js或者viewName以".js"结尾时，jsonViewResolver生效 -->
+				<entry key="js">
+					<ref bean="jsonViewResolver" />
+				</entry>
+				<entry key="pdf">
+					<ref bean="pdfViewResolver" />
+				</entry>
+			</map>
+		</property>
+	</bean>
+
+	<!--===================================================================== -->
+	<!-- 定义视图解析器，用哪种解析器来生成最终供用户显示的视图 -->
+	<!--===================================================================== -->
+	<bean id="viewResolver"
+		class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="viewClass">
+			<description>
+				使用Tiles来解析视图，Tiles用来组装页面视图，生成最终的HTML页面。
+				除了Tiles外，还可能用Excel、PDF等解析器。
+            </description>
+			<value>org.springframework.web.servlet.view.tiles.TilesJstlView
+			</value>
+		</property>
+	</bean>
+
+	<bean id="jsonViewResolver"
+		class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<!--表示此viewResolver会自动在响应的View名加后缀[.js] -->
+		<property name="suffix" value=".js"></property>
+		<property name="order" value="11"></property>
+		<property name="viewClass">
+			<value>org.springframework.web.servlet.view.tiles.TilesJstlView
+			</value>
+		</property>
+	</bean>
+	<bean id="pdfViewResolver" class="com.paic.pafa.web.view.PafaBeanNameViewResolver">
+		<property name="suffix" value=".pdf"></property>
+		<property name="order" value="14"></property>
+		<property name="contentType" value="application/pdf"></property>
+	</bean>
+   <!-- 异常处理 -->
+	<bean id="tilesConfigurer"
+		class="org.springframework.web.servlet.view.tiles.TilesConfigurer">
+		<property name="definitions">
+			<list>
+				<value>/WEB-INF/tiles-defs.xml</value>
+			</list>
+		</property>
+	</bean>
+	<bean id="pafaMappingExceptionResolver" class="com.paic.pafa.web.PafaMappingExceptionResolver">
+		<property name="defaultErrorView" value="errorView"></property>
+		<property name="defaultStatusCode" value="200"></property>
+		<property name="exceptionMappings">
+			<map>
+				<entry key="com.paic.pafa.web.flow.FlowNotFoundException">
+					<value>flowNotFoundView</value>
+				</entry>
+				<entry key="com.paic.pafa.validator.ValidateFailException">
+					<value>validateFailView</value>
+				</entry>
+				<entry key="com.paic.pafa.app.biz.service.BusinessServiceException">
+					<value>duplicateSubSysIdErrorView</value>
+				</entry>
+			</map>
+		</property>
+	</bean>
+	<!--===================================================================== -->
+	<!-- 定义业务系统的消息配置文件 -->
+	<!--===================================================================== -->
+	<bean id="messageSource"
+		class="org.springframework.context.support.ResourceBundleMessageSource">
+		<property name="basenames">
+			<description>
+				定义业务系统消息配置文件的基本名称（basename）。
+				消息配置文件的命名格式为“[基本名称]_[语言种类].properties”，
+				例如message-error.properties和message-error_zh_CN.properties
+				的basename都为“message-error”。
+				系统首先查找和指定语言种类对应的消息配置文件，如果没有找到，
+				就查找它父一级的消息文件。
+				例如message-error_zh_CN.properties为简体中文的消息文件，
+				如果在CLASSPATH中没有找到该文件，系统将查找名为
+				message-error.properties的文件。
+				可以在这里定义多个消息配置文件的basename。
+				请参考java.util.ResourceBundle的说明文档。
+			</description>
+			<list>
+				<value>message-error</value>
+				<value>message-info</value>
+			</list>
+		</property>
+	</bean>
+
+	<!--===================================================================== -->
+	<!-- 定义公用的*.screen，screen请求是简单的页面跳转 -->
+	<!--===================================================================== -->
+	<bean name="/index.screen"
+		class="org.springframework.web.servlet.mvc.ParameterizableViewController">
+		<description>转到主页</description>
+		<property name="viewName">
+			<value>indexView</value>
+		</property>
+	</bean>
+	<bean name="/error.screen"
+		class="org.springframework.web.servlet.mvc.ParameterizableViewController">
+		<description>转到出错的页面</description>
+		<property name="viewName">
+			<value>errorView</value>
+		</property>
+	</bean>
+
+	<!--===================================================================== -->
+	<!-- 功能模块组件定义 -->
+	<!--===================================================================== -->
+	<!-- TODO: 在这里为功能模块添加web层组件的定义。 当功能模块比较多的时候，可以把web-context.xml按照模块拆分成多个文件，例如 
+		web-context-group1.xml，web-context-group2.xml等，并在web.xml中， 在dispatcher的contextConfigLocation属性中将这些配置文件添加进去。 -->
+
+	<!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+	<!-- 定义模块的Web层的数据校验Validator -->
+	<!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+	<!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+	<!-- 定义模块的 *.do 请求 -->
+	<!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+	<!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+	<!-- 定义模块的 *.screen 请求 -->
+	<!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+	<import resource="biz-context.xml" />
+	<!--
+	<import resource="metaq-context.xml" />
+	-->
+</beans>

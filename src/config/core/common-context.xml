@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+		 http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
+	<!--===================================================================== -->
+	<!-- 配置外部变量文件 -->
+	<!--===================================================================== -->
+	<bean id="propertyConfigurer"
+		class="com.paic.pafa.utils.PafaPropertyPlaceholderConfigurer">
+		<property name="location">
+			<description>可以引用CLASSPATH中context.properties中定义的变量</description>
+			<value>classpath:context-ring.properties</value>
+		</property>
+	</bean>
+
+
+	<!--===================================================================== -->
+	<!-- PafaAC JNDI定义 -->
+	<!--===================================================================== -->
+
+
+ 
+
+	<!--===================================================================== -->
+	<!-- PAFA AC定义 -->
+	<!--===================================================================== -->
+	<!-- 
+	<bean id="pafaAC" class="com.paic.system.ApplicationControllerHessianClient"
+		lazy-init="true">
+		<property name="proxy">
+			<ref local="pafaAC_HessianProxy"/>
+		</property>
+	</bean>
+
+
+	<bean id="pafaAC_HessianProxy"
+		class="org.springframework.remoting.caucho.HessianProxyFactoryBean">
+		
+		<property name="serviceUrl">
+			<value>${Pafa4ForTomcat.http.url}</value>
+		</property>
+		<property name="serviceInterface">
+			<value>com.paic.pafa.app.biz.ac.ApplicationController</value>
+		</property>
+		<property name="proxyFactory">
+			<ref local="pafaHessianProxyFactory" />
+		</property>
+	</bean>
+    <bean id="pafaHessianProxyFactory" class="com.paic.pafa.app.lwc.service.remoting.access.servlet.PafaHessianProxyFactory"> 
+    <property name="username"> 
+      <value>V_USERMANAGER_GROUP_TESTUM_001</value> 
+    </property>  
+    <property name="password"> 
+      <value>49tR5XKv</value> 
+    </property>
+  </bean>
+	 -->
+	<!--本地方式的PafaAC调用代理，可用于本地调试和单元测试、持续集成环境。 如果Web和App部署在同一JVM中，可以使用此PafaAc调用代理，它的特点是无远程调用，不依赖J2EE容器 -->
+<!-- 	<bean id="testPafaAcClient" class="com.paic.pafa.testing.TestApplicationControllerClient"></bean> -->
+
+
+	<!-- Web(DMZ/web2)调用APP的调用代理的切换配置，具体见本节第3点 -->
+<!-- 	<bean class="com.paic.pafa.appclient.WebPafaAcClientResolver"> -->
+<!-- 		<property name="defaultPafaAcClient"> -->
+<!-- 			<value>${web.defaultPafaAcClient}</value> -->
+<!-- 		</property> -->
+<!-- 	</bean> -->
+
+</beans>

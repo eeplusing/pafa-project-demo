@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		xsi:schemaLocation="http://www.springframework.org/schema/beans 
+		 http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
+		 
+    <description>配置应用系统的日志</description>
+    
+    <!--  bean的默认属性说明 
+        singleton:默认为true,表示该Bean仅会创建一个实例。
+        lazy-init:默认为false,表示该Bean会在context创建的时候进行实例化。
+        autowire:默认为no,表示必须使用ref来引用其他的bean。
+        dependency-check:默认为none,表示不对该bean的属性进行检查。 
+        
+        详细的说明请参考lwc-beans.dtd.
+     -->
+       
+    
+    <!--=====================================================================-->
+    <!-- 配置外部变量文件 -->
+    <!--=====================================================================-->
+   <bean id="propertyConfigurer" class="com.paic.pafa.utils.PafaPropertyPlaceholderConfigurer">
+        <property name="location">
+            <description>可以引用CLASSPATH中context.properties中定义的变量</description>
+            <value>classpath:context-ring.properties</value>
+        </property>
+    </bean>
+    <!--=====================================================================-->
+    <!-- 定义日志记录器，一个日志记录器可以引用一个或多个Handler来处理日志 -->
+    <!--=====================================================================-->
+    <bean id="tracer" class="com.paic.pafa.logging3.impl.Log4JLogger">
+        <constructor-arg>
+            <description>日志记录器的名称</description>
+            <value>tracer</value>
+        </constructor-arg>
+        <property name="pattern">
+            <value>%impt %uid %ip %date %ms %seq %log %lv %cls %mtd %tid %err %msg %th %cust</value>
+        </property>        
+    </bean>
+
+    <bean id="auditLogger" class="com.paic.pafa.logging3.impl.Log4JLogger">
+        <constructor-arg>
+            <description>日志记录器的名称</description>
+            <value>auditLogger</value>
+        </constructor-arg>
+        <property name="pattern">
+            <value>%impt %uid %ip %date %ms %seq %log %lv %cls %mtd %tid %err %msg %th %cust</value>
+        </property>
+        
+    </bean>
+
+    <bean id="errorLogger" class="com.paic.pafa.logging3.impl.Log4JLogger">
+        <constructor-arg>
+            <description>日志记录器的名称</description>
+            <value>errorLogger</value>
+        </constructor-arg>
+        <property name="pattern">
+            <value>%uid %msg %uid</value>
+        </property>        
+    </bean>
+
+    <!--=====================================================================-->
+    <!-- 以下配置一般不需更改 -->
+    <!--=====================================================================-->
+    <bean id="exHandler"
+        class="com.paic.pafa.core.exceptions.impl.GeneratePAFAErrorListExceptionHandler"/>
+    <bean id="idGenerator" class="com.paic.pafa.core.service.IDGenerator">
+        <description>用于生成记录的ID</description>
+    </bean>
+<!--     <bean id="logConfigRefresher" -->
+<!--         class="com.paic.pafa.app.lwc.core.util.LogConfigRefresher"> -->
+<!--         <description>log4j日志配置文件刷新器</description> -->
+<!--         <property name="refreshInterval"> -->
+<!--         <description>默认值为60000毫秒</description> -->
+<!--             <value>10000</value> -->
+<!--         </property>            -->
+<!--     </bean>         -->
+
+
+    <bean id="threadContext" class="com.paic.pafa.core.service.PafaThreadContext">
+        <description>线程的Context</description>
+    </bean>
+ 
+</beans>

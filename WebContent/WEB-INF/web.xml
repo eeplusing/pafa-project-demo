@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app version="2.4" xmlns="http://java.sun.com/xml/ns/j2ee"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd">
+   <resource-ref> 
+        <description>DB Connection</description> 
+        <res-ref-name>jdbc/testpoolring</res-ref-name> 
+        <res-type>javax.sql.DataSource</res-type> 
+        <res-auth>Container</res-auth> 
+  </resource-ref> 
+    <filter>
+        <filter-name>Set Character Encoding</filter-name>
+        <filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
+        <init-param>
+            <param-name>encoding</param-name>
+            <param-value>UTF-8</param-value>
+        </init-param>
+    </filter>
+
+    <filter-mapping>
+        <filter-name>Set Character Encoding</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+	
+	<!-- 
+	<filter>
+		<filter-name>LoginFilter</filter-name>
+        <filter-class>com.ring.front.web.filter.LoginFilter</filter-class>
+        
+	</filter>
+	
+	<filter-mapping>
+        <filter-name>LoginFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+    -->
+	<servlet>
+	 	<servlet-name>properties-init</servlet-name>
+	 	<servlet-class>com.ring.front.util.PropertiesConfigUtil</servlet-class> 
+	 	<init-param>
+	 		<param-name>properties-init-file</param-name> 
+	 		<param-value>context-ring</param-value> 
+	 	</init-param>
+	 	<load-on-startup>1</load-on-startup> 
+	</servlet>
+
+    <servlet>
+        <servlet-name>dispatcher</servlet-name>
+        <servlet-class>com.paic.pafa.web.PafaDispatcherServlet</servlet-class>
+        <init-param>
+
+            <param-name>contextConfigLocation</param-name>
+            <param-value>/WEB-INF/web-context.xml</param-value>
+        </init-param>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+    
+    <!-- 获取验证码 -->
+     <servlet>
+	    <description></description>
+	    <display-name>GenValidationCode</display-name>
+	    <servlet-name>GenValidationCode</servlet-name>
+	    <servlet-class>com.ring.front.web.servlet.GenValidationCode</servlet-class>
+	  </servlet>
+	  <servlet-mapping>
+	    <servlet-name>GenValidationCode</servlet-name>
+	    <url-pattern>/GenValidationCode.screen</url-pattern>
+	  </servlet-mapping>
+	  
+	 <!-- 校验验证码 -->
+     <servlet>
+	    <description></description>
+	    <display-name>CheckValidationCode</display-name>
+	    <servlet-name>CheckValidationCode</servlet-name>
+	    <servlet-class>com.ring.front.web.servlet.CheckValidationCode</servlet-class>
+	  </servlet>
+	  <servlet-mapping>
+	    <servlet-name>CheckValidationCode</servlet-name>
+	    <url-pattern>/CheckValidationCode.screen</url-pattern>
+	  </servlet-mapping>				
+ <!--      
+     <servlet>
+        <servlet-name>pafaACServlet</servlet-name>
+        <servlet-class>com.paic.pafa.app.lwc.service.remoting.access.servlet.PafaBizHessianServlet</servlet-class>
+        <init-param>
+            <param-name>beanFactoryPath</param-name>
+            <param-value>biz-context.xml</param-value>
+        </init-param>
+        <init-param>
+            <param-name>service</param-name>
+            <param-value>applicationControllerPojo</param-value>
+        </init-param>
+        <init-param>
+            <param-name>serviceInterface</param-name>
+            <param-value>com.paic.pafa.app.biz.ac.ApplicationController</param-value>
+        </init-param>
+        <init-param>
+            <param-name>userVerifier</param-name>
+            <param-value>userVerifier</param-value>
+        </init-param>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>pafaACServlet</servlet-name>
+        <url-pattern>*.pafaACServlet</url-pattern>
+    </servlet-mapping>
+     -->
+    <servlet-mapping>
+        <servlet-name>dispatcher</servlet-name>
+        <url-pattern>*.do</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>dispatcher</servlet-name>
+        <url-pattern>*.screen</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>dispatcher</servlet-name>
+        <url-pattern>/rest/*</url-pattern>
+    </servlet-mapping>
+
+    <welcome-file-list>
+        <welcome-file>index.screen</welcome-file>
+    </welcome-file-list>
+
+    <error-page>
+        <exception-type>java.lang.Throwable</exception-type>
+        <location>/commonerror.jsp</location>
+    </error-page>
+    <jsp-config>
+        <taglib>
+            <taglib-uri>http://java.sun.com/jsp/jstl/core</taglib-uri>
+            <taglib-location>/WEB-INF/tlds/c.tld</taglib-location>
+        </taglib>
+        <taglib>
+            <taglib-uri>http://java.sun.com/jsp/jstl/fmt</taglib-uri>
+            <taglib-location>/WEB-INF/tlds/fmt.tld</taglib-location>
+        </taglib>
+        <taglib>
+            <taglib-uri>http://www.paic.com.cn/tags-lwc</taglib-uri>
+            <taglib-location>/WEB-INF/tlds/lwc.tld</taglib-location>
+        </taglib>
+        <!-- <jsp-property-group> -->
+        <!-- <url-pattern>*.jsp</url-pattern> -->
+        <!-- <el-ignored>true</el-ignored> -->
+        <!-- </jsp-property-group> -->
+    </jsp-config>
+    <security-constraint>
+        <web-resource-collection>
+            <web-resource-name>protect</web-resource-name> <!--这个配置的名称，可以随便写 -->
+            <url-pattern>*.dox</url-pattern> <!--要保护的页面，支持通配符 --> 
+            <url-pattern>*.screenx</url-pattern> <!--要保护的页面，支持通配符 --> 
+            <url-pattern>*.jspx</url-pattern>
+            <http-method>GET</http-method>
+            <http-method>POST</http-method> <!--要保护的操作 -->
+        </web-resource-collection>
+        <auth-constraint>
+            <role-name>users</role-name> <!--用那个角色来保护，用户要有这个角色才能访问 -->
+        </auth-constraint>
+    </security-constraint>
+    <login-config>
+        <auth-method>FORM</auth-method>
+        <realm-name>default</realm-name>
+        <form-login-config>
+            <form-login-page>/login.jsp</form-login-page> <!--登陆页面 -->
+            <form-error-page>/login_err.jsp</form-error-page> <!--登陆失败的页面 -->
+        </form-login-config>
+    </login-config>
+    <security-role>
+        <role-name>users</role-name> <!--系统中使用到这操作，users这个角色是weblogic默认的，没个登陆成功的用户都会有这个角色 -->
+    </security-role>
+
+	<!-- 设置session时效时长  add by ganchungen-->
+	<session-config> 
+		<session-timeout>15</session-timeout> 
+	</session-config>
+	
+	<listener>
+        <listener-class>org.springframework.web.context.request.RequestContextListener</listener-class>
+ 	</listener>
+</web-app>
